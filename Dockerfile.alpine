@@ -1,0 +1,16 @@
+FROM alpine:3.22 AS builder
+RUN apk update && apk add --no-cache \
+    build-base \
+    gsl-dev \
+    git
+WORKDIR /app
+ARG BRANCH=master
+ARG OWNER=lucaferretti
+RUN git clone --depth 1 https://github.com/$OWNER/npstat.git --branch $BRANCH --single-branch . && make
+
+FROM alpine:3.22 AS app
+RUN apk update && apk add --no-cache gsl && mkdir -p /app/data
+WORKDIR /app/data
+COPY --from=builder /app/npstat /app/npstat
+ENTRYPOINT ["/app/npstat"]
+CMD ["--help"]
